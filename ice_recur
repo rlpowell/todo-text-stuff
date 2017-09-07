@@ -237,7 +237,7 @@ else
   # Get our recur entries
   # Drop everything that looks like a comment or blank
   recur_entries = File.read(recur_file).split("\n").reject { |e| e =~ %r{(^\s*#|^\s*$)} }
-  bad_entries = recur_entries.reject { |e| e =~ %r{^(@[0-9-]+ )?[A-Za-z;,_0-9\s]+ - } }
+  bad_entries = recur_entries.reject { |e| e =~ %r{^(@[0-9-]+ )?[A-Za-z;,-_0-9\s]+ - } }
   if bad_entries.length > 0
     raise "Bad entries found in #{recur_file}: \n#{bad_entries.join("\n")}"
   end
