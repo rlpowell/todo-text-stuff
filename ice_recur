@@ -207,7 +207,9 @@ elsif opts[:show_next]
 
   recur_entries.each do |recur|
     schedstr, taskstr = recur.strip.split(%r{\s+-\s+}, 2)
-    puts "Schedule: #{schedstr} -- Next Day: #{make_schedule( schedstr ).next_occurrence.strftime("%Y-%m-%d")} -- Text: #{taskstr}"
+    if schedstr && taskstr
+      puts "Schedule: #{schedstr} -- Next Day: #{make_schedule( schedstr ).next_occurrence.strftime("%Y-%m-%d")} -- Text: #{taskstr}"
+    end
   end
 elsif opts[:check]
   email = opts[:check]
