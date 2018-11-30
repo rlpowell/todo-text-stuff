@@ -13,3 +13,4 @@ Run ice_recur tests like this if you want pretty output and failure if you miss 
 Changelog:
 
 ice_recur 1.2 29 Nov 2018: Added support for day_of_week, day_of_year and month_of_year
+ice_recur 1.3 29 Nov 2018: Now uses the timestamp on the .ice_recur_completed file, and runs the schedule for each day since then, so you can run it less than once a day and it'll still work properly.

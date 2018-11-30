@@ -4,7 +4,7 @@ require 'ice_cube'
 require 'todotxt'   # https://github.com/tylerdooling/todotxt-rb ; gem install todotxt-rb
 require 'trollop'
 
-$VERSION='1.2'
+$VERSION='1.3'
 
 opts = Trollop::options do
   version "ice_recur #{$VERSION} by Robin Lee Powell, MIT license.  Some code taken from https://github.com/chuckbjones/todo.txt-cli-addons/blob/master/recur , license unknown"
@@ -84,6 +84,8 @@ opts = Trollop::options do
   "yearly ; day_of_year 16", aka "Yearly on the 16th day of the year"
   "yearly 4 ; day_of_year -1", aka "Every 4 years on the last day of the year"
   "yearly ; month_of_year March, April", aka "Yearly in March and April"
+
+
 EOS
 
   opt :test, "Run tests on the recurrence code."
@@ -390,26 +392,40 @@ else
     File.open(todo_file, 'r+') do |todo_fh|
       todo_list = TodoTxt::List.from_file(todo_fh)
 
-      recur_entries.each do |recur|
-        schedstr, taskstr = recur.strip.split(%r{\s+-\s+}, 2)
-        if make_schedule( schedstr ).occurs_on?(Date.today)
-          puts "- Recur matches today: #{schedstr} --- #{taskstr}"
-          task = TodoTxt::Task.parse(taskstr)
-          task[:created_at] = DateTime.now
-          found_task = todo_list.select { |t| t.text == task.text && ! t.completed? }.first
-          if found_task
-            puts "    - Duplicate task exists: #{found_task.text}"
-          else
-            puts "    -  No duplicate found for #{taskstr}"
-            puts "    -  Adding #{taskstr}"
+      if File.exists?(completed_file)
+        start_day = File.mtime(completed_file).to_date
+      else
+        start_day = Date.today
+      end
+      end_day = Date.today
+      cur_day = start_day
 
-            todo_list << task
-            todo_fh.rewind
-            todo_fh.truncate(todo_fh.pos)
-            todo_list.to_file(todo_fh)
-            todo_fh.write("\n")
+      while cur_day <= end_day
+        puts "Working on day #{cur_day.to_s}:"
+
+        recur_entries.each do |recur|
+          schedstr, taskstr = recur.strip.split(%r{\s+-\s+}, 2)
+          if make_schedule( schedstr ).occurs_on?(cur_day)
+            puts "- Recur matches #{cur_day.to_s}: #{schedstr} --- #{taskstr}"
+            task = TodoTxt::Task.parse(taskstr)
+            task[:created_at] = cur_day
+            found_task = todo_list.select { |t| t.text == task.text && ! t.completed? }.first
+            if found_task
+              puts "    - Duplicate task exists: #{found_task.text}"
+            else
+              puts "    -  No duplicate found for #{taskstr}"
+              puts "    -  Adding #{taskstr}"
+
+              todo_list << task
+              todo_fh.rewind
+              todo_fh.truncate(todo_fh.pos)
+              todo_list.to_file(todo_fh)
+              todo_fh.write("\n")
+            end
           end
         end
+
+        cur_day += 1
       end
     end
   rescue => e
