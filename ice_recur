@@ -117,11 +117,11 @@ def make_schedule( rulestr, startdate = nil )
 end
 
 $tapnum=1
-def tapprint( bool, text )
+def tapprint( tstring, schedule, bool, text )
   if bool
-    puts "ok #{$tapnum} - #{text}"
+    puts %Q{ok #{$tapnum} - "#{tstring}", aka "#{schedule.to_s}", #{text}}
   else
-    puts "not ok #{$tapnum} - #{text}"
+    puts %Q{not ok #{$tapnum} - "#{tstring}", aka "#{schedule.to_s}", #{text}}
   end
   $tapnum += 1
 end
@@ -139,79 +139,86 @@ if opts[:test]
 
   tstring="daily"
   schedule = make_schedule( tstring )
-  tapprint( schedule.occurs_on?(test_today), "#{tstring} includes today" )
-
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_today), "includes today" )
 
   tstring="daily 2"
   schedule = make_schedule( tstring, test_today )
-  tapprint( schedule.occurs_on?(test_today) &&
-      ! schedule.occurs_on?(test_today + 1) &&
-      schedule.occurs_on?(test_today + 2),
-        "#{tstring} includes today, and 2 days from now, but not tomorrow" )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_today) &&
+           ! schedule.occurs_on?(test_today + 1) &&
+           schedule.occurs_on?(test_today + 2),
+           "includes today, and 2 days from now, but not tomorrow" )
 
   tstring="@2018-01-15 daily 2"
   schedule = make_schedule( tstring )
-  tapprint( 
-      schedule.occurs_on?(test_today - 1) &&
-      ! schedule.occurs_on?(test_today) &&
-      schedule.occurs_on?(test_today + 1) &&
-      ! schedule.occurs_on?(test_today + 2) &&
-      schedule.occurs_on?(test_today + 3) &&
-      ! schedule.occurs_on?(test_today + 4),
-        "#{tstring} includes some days and not others, and today is not one of them" )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_today - 1) &&
+           ! schedule.occurs_on?(test_today) &&
+           schedule.occurs_on?(test_today + 1) &&
+           ! schedule.occurs_on?(test_today + 2) &&
+           schedule.occurs_on?(test_today + 3) &&
+           ! schedule.occurs_on?(test_today + 4),
+           "includes some days and not others, and today is not one of them" )
 
   tstring="weekly ; day 2, 4"
   schedule = make_schedule( tstring )
-  tapprint( schedule.occurs_on?(test_today) &&
-      ! schedule.occurs_on?(test_today + 1) &&
-      schedule.occurs_on?(test_today + 2) &&
-      ! schedule.occurs_on?(test_today + 4) &&
-      ! schedule.occurs_on?(test_today + 5),
-        "#{tstring} includes some days and not others" )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_today) &&
+           ! schedule.occurs_on?(test_today + 1) &&
+           schedule.occurs_on?(test_today + 2) &&
+           ! schedule.occurs_on?(test_today + 4) &&
+           ! schedule.occurs_on?(test_today + 5),
+           "includes some days and not others" )
 
   tstring="weekly ; day 2, 3"
   schedule = make_schedule( tstring )
-  tapprint( schedule.occurs_on?(test_today) &&
-      schedule.occurs_on?(test_today + 1) &&
-      ! schedule.occurs_on?(test_today + 2) &&
-      ! schedule.occurs_on?(test_today + 4) &&
-      ! schedule.occurs_on?(test_today + 5),
-        "#{tstring} includes a different set of days" )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_today) &&
+             schedule.occurs_on?(test_today + 1) &&
+             ! schedule.occurs_on?(test_today + 2) &&
+             ! schedule.occurs_on?(test_today + 4) &&
+             ! schedule.occurs_on?(test_today + 5),
+             "includes a different set of days" )
 
   tstring=%Q{weekly ; day Tuesday, Thursday}
   schedule = make_schedule( tstring )
-  tapprint( schedule.occurs_on?(test_today) &&
-      ! schedule.occurs_on?(test_today + 1) &&
-      schedule.occurs_on?(test_today + 2) &&
-      ! schedule.occurs_on?(test_today + 4) &&
-      ! schedule.occurs_on?(test_today + 5),
-        "#{tstring} includes some days (including today) and not others" )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_today) &&
+           ! schedule.occurs_on?(test_today + 1) &&
+           schedule.occurs_on?(test_today + 2) &&
+           ! schedule.occurs_on?(test_today + 4) &&
+           ! schedule.occurs_on?(test_today + 5),
+           "includes some days (including today) and not others" )
 
   tstring=%Q{weekly ; day Tuesday, Wednesday}
   schedule = make_schedule( tstring )
-  tapprint( schedule.occurs_on?(test_today) &&
-      schedule.occurs_on?(test_today + 1) &&
-      ! schedule.occurs_on?(test_today + 2) &&
-      ! schedule.occurs_on?(test_today + 4) &&
-      ! schedule.occurs_on?(test_today + 5),
-        "#{tstring} includes some days (not including today) and not others" )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_today) &&
+           schedule.occurs_on?(test_today + 1) &&
+           ! schedule.occurs_on?(test_today + 2) &&
+           ! schedule.occurs_on?(test_today + 4) &&
+           ! schedule.occurs_on?(test_today + 5),
+           "includes some days (not including today) and not others" )
 
   tstring="monthly ; day_of_month 16, 18"
   schedule = make_schedule( tstring )
-  tapprint( schedule.occurs_on?(test_today) &&
-      ! schedule.occurs_on?(test_today + 1) &&
-      schedule.occurs_on?(test_today + 2) &&
-      ! schedule.occurs_on?(test_today + 4) &&
-      ! schedule.occurs_on?(test_today + 5),
-        "#{tstring} includes a different set of days" )
+  tapprint( tstring, schedule, 
+           schedule.occurs_on?(test_today) &&
+           ! schedule.occurs_on?(test_today + 1) &&
+           schedule.occurs_on?(test_today + 2) &&
+           ! schedule.occurs_on?(test_today + 4) &&
+           ! schedule.occurs_on?(test_today + 5),
+           "includes a different set of days" )
 
   tstring="monthly ; day_of_month -1"
   last_day_month_num = Date.parse("31 Jan 2018")
   schedule = make_schedule( tstring )
-  tapprint( schedule.occurs_on?(last_day_month_num) &&
-      ! schedule.occurs_on?(last_day_month_num + 1) &&
-      ! schedule.occurs_on?(last_day_month_num - 1),
-        "#{tstring} includes the last day of the month, but not the day before or after that" )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(last_day_month_num) &&
+           ! schedule.occurs_on?(last_day_month_num + 1) &&
+           ! schedule.occurs_on?(last_day_month_num - 1),
+           "includes the last day of the month, but not the day before or after that" )
 elsif opts[:show_next]
   recur_entries = File.read(recur_file).split("\n").reject { |e| e =~ %r{^#} }
 
