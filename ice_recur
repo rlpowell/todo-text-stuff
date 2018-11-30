@@ -70,6 +70,20 @@ opts = Trollop::options do
   @2016-03-01 Monthly 3 - Runs every 3 months starting on the day specified (so, occurs on the first day of the month; next occurence is 2016-06-01)
   @2016-01-04 Yearly - Runs every year starting on the day specifiod (so, occurs on the 4th of January)
 
+  Some more examples of just the date syntax:
+
+  "weekly ; day 2, 4", aka "Weekly on Tuesdays and Thursdays"
+  "weekly ; day 2, 3", aka "Weekly on Tuesdays and Wednesdays"
+  "weekly ; day Tuesday, Thursday", aka "Weekly on Tuesdays and Thursdays"
+  "weekly ; day Tuesday, Wednesday", aka "Weekly on Tuesdays and Wednesdays"
+  "monthly ; day_of_month 16, 18", aka "Monthly on the 16th and 18th days of the month"
+  "monthly ; day_of_month 1, -3", aka "Monthly on the 1st and -3th to last days of the month"
+  "monthly 2 ; day_of_month 15", aka "Every 2 months on the 15th day of the month"
+  "monthly ; day_of_week Tuesday => 1, -1", aka "Monthly on the 1st Tuesday and last Tuesday"
+  "monthly 2 ; day_of_week :monday => 1 ; day_of_week 3 => -1", aka "Every 2 months on the 1st Monday and last Wednesday"
+  "yearly ; day_of_year 16", aka "Yearly on the 16th day of the year"
+  "yearly 4 ; day_of_year -1", aka "Every 4 years on the last day of the year"
+  "yearly ; month_of_year March, April", aka "Yearly in March and April"
 EOS
 
   opt :test, "Run tests on the recurrence code."

@@ -8,4 +8,4 @@ templated_checklists : A file to keep available copies of one-time checklists (i
 
 Tests:
 
-Run ice_recur tests like this if you want pretty output and failure if you miss tests: prove --exec "./ice_recur --test" ice_recur
+Run ice_recur tests like this if you want pretty output and failure if you miss tests: prove -v --exec "./ice_recur --test" ice_recur
