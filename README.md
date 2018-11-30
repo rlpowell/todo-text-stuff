@@ -9,3 +9,7 @@ templated_checklists : A file to keep available copies of one-time checklists (i
 Tests:
 
 Run ice_recur tests like this if you want pretty output and failure if you miss tests: prove -v --exec "./ice_recur --test" ice_recur
+
+Changelog:
+
+ice_recur 1.2 29 Nov 2018: Added support for day_of_week, day_of_year and month_of_year
