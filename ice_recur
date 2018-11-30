@@ -77,6 +77,43 @@ EOS
   opt :show_next, "Instead of generating entries, show the next date that each entry *would* run."
 end
 
+# Probably should have just used a parser library :P
+def make_args( argstr )
+  args = []
+
+  if argstr
+    # Returning a hash
+    if argstr =~ %r{=>}
+      argsarr = argstr.strip.split(%r{\s*=>\s*})
+      if argsarr.length != 2
+        raise "This string seems to have too many => in it; needs to be only one: #{argstr}"
+      end
+      argsarr.map! do |arg|
+        arg = make_args(arg)
+      end
+
+      # The key should not be an array
+      argsarr[0] = argsarr[0].first
+      args = Hash[*argsarr]
+    else
+      args = argstr.strip.split(%r{\s*,\s*})
+
+      args.map! do |arg|
+        # Turn "January" into :january
+        if arg =~ %r{^:?([a-zA-Z]+)\s*$}
+          arg = $1.downcase.to_sym
+        elsif arg =~ %r{[0-9]+}
+          arg = arg.to_i
+        else
+          arg
+        end
+      end
+    end
+  end
+
+  return args
+end
+
 def make_schedule( rulestr, startdate = nil )
   # Get the start date, if any
   startdate ||= Time.new(2018,01,01).to_date
@@ -92,23 +129,13 @@ def make_schedule( rulestr, startdate = nil )
     method, argstr = rulebit.strip.split(%r{\s+}, 2)
     method.downcase!
 
-    args = []
+    args = make_args( argstr )
 
-    if argstr
-      args = argstr.strip.split(%r{\s*,\s*})
-
-      args.map! do |arg|
-        if arg =~ %r{day\s*$}
-          arg.downcase.to_sym
-        elsif arg =~ %r{[0-9]+}
-          arg = arg.to_i
-        else
-          arg
-        end
-      end
+    if args.is_a?(Hash)
+      rule = rule.send(method, args)
+    else
+      rule = rule.send(method, *args)
     end
-
-    rule = rule.send(method, *args)
   end
 
   schedule.add_recurrence_rule rule
@@ -135,7 +162,7 @@ if opts[:test]
   test_today = Date.parse("16 Jan 2018")
   puts %q{# **NB** All tests use 16 Jan 2018 as "today".}
 
-  puts "1..10"
+  puts "1..15"
 
   tstring="daily"
   schedule = make_schedule( tstring )
@@ -225,13 +252,79 @@ if opts[:test]
            "includes the days in question, but not the days before and after those" )
 
   tstring="monthly 2 ; day_of_month 15"
-  test_day = Date.parse("15 Mar 2018")
+  test_day_1 = Date.parse("15 Mar 2018")
+  test_day_2 = Date.parse("15 Feb 2018")
   schedule = make_schedule( tstring )
   tapprint( tstring, schedule,
-           schedule.occurs_on?(test_day) &&
-           ! schedule.occurs_on?(test_day + 1) &&
-           ! schedule.occurs_on?(test_day - 1),
-           "includes the day in question, but not the days before and after those" )
+           schedule.occurs_on?(test_day_1) &&
+           ! schedule.occurs_on?(test_day_1 + 1) &&
+           ! schedule.occurs_on?(test_day_1 - 1) &&
+           ! schedule.occurs_on?(test_day_2),
+           "includes the day in question, but not the days before and after that, nor that day in an off month" )
+
+  tstring="monthly ; day_of_week Tuesday => 1, -1"
+  test_day_1 = Date.parse("6 Mar 2018")
+  test_day_2 = Date.parse("27 Mar 2018")
+  schedule = make_schedule( tstring )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_day_1) &&
+           ! schedule.occurs_on?(test_day_1 + 1) &&
+           ! schedule.occurs_on?(test_day_1 - 1) &&
+           schedule.occurs_on?(test_day_2) &&
+           ! schedule.occurs_on?(test_day_2 + 1) &&
+           ! schedule.occurs_on?(test_day_2 - 1),
+           "includes the days in question, but not the days before and after those" )
+
+  tstring="monthly 2 ; day_of_week :monday => 1 ; day_of_week 3 => -1"
+  test_day_1 = Date.parse("5 Mar 2018")
+  test_day_2 = Date.parse("28 Mar 2018")
+  test_day_3 = Date.parse("5 Feb 2018")
+  test_day_4 = Date.parse("28 Feb 2018")
+  schedule = make_schedule( tstring )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_day_1) &&
+           ! schedule.occurs_on?(test_day_1 + 1) &&
+           ! schedule.occurs_on?(test_day_1 - 1) &&
+           schedule.occurs_on?(test_day_2) &&
+           ! schedule.occurs_on?(test_day_2 + 1) &&
+           ! schedule.occurs_on?(test_day_2 - 1) &&
+           ! schedule.occurs_on?(test_day_3) &&
+           ! schedule.occurs_on?(test_day_4),
+           "includes the days in question, but not the days before and after those, nor those days in an off month" )
+
+  tstring="yearly ; day_of_year 16"
+  schedule = make_schedule( tstring )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_today) &&
+           ! schedule.occurs_on?(test_today + 1) &&
+           ! schedule.occurs_on?(test_today - 1),
+           "includes today, but not the days before and after" )
+
+  tstring="yearly 4 ; day_of_year -1"
+  test_day_1 = Date.parse("31 Dec 2018")
+  test_day_2 = Date.parse("31 Dec 2019")
+  schedule = make_schedule( tstring )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_day_1) &&
+           ! schedule.occurs_on?(test_day_1 + 1) &&
+           ! schedule.occurs_on?(test_day_1 - 1) &&
+           ! schedule.occurs_on?(test_day_2),
+           "includes 31 Dec 2018, but not the days before and after, and not 31 Dec 2019" )
+
+  tstring="yearly ; month_of_year March, April"
+  test_day_1 = Date.parse("16 Mar 2019")
+  test_day_2 = Date.parse("16 Apr 2019")
+  test_day_3 = Date.parse("16 Jan 2019")
+  schedule = make_schedule( tstring, test_today )
+  tapprint( tstring, schedule,
+           schedule.occurs_on?(test_day_1) &&
+           ! schedule.occurs_on?(test_day_1 + 1) &&
+           ! schedule.occurs_on?(test_day_1 - 1) &&
+           schedule.occurs_on?(test_day_2) &&
+           ! schedule.occurs_on?(test_day_2 + 1) &&
+           ! schedule.occurs_on?(test_day_2 - 1) &&
+           ! schedule.occurs_on?(test_day_3),
+           "includes 16 Mar 2018 and 16 Apr 2018, but not the days before and after, and not 16 Jan 2018" )
 elsif opts[:show_next]
   recur_entries = File.read(recur_file).split("\n").reject { |e| e =~ %r{^#} }
 
