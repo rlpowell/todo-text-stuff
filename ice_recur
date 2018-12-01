@@ -2,11 +2,11 @@
 
 require 'ice_cube'
 require 'todotxt'   # https://github.com/tylerdooling/todotxt-rb ; gem install todotxt-rb
-require 'trollop'
+require 'optimist'
 
 $VERSION='1.3'
 
-opts = Trollop::options do
+opts = Optimist::options do
   version "ice_recur #{$VERSION} by Robin Lee Powell, MIT license.  Some code taken from https://github.com/chuckbjones/todo.txt-cli-addons/blob/master/recur , license unknown"
   banner <<-EOS
 
@@ -18,7 +18,7 @@ opts = Trollop::options do
 
   This script goes in $TODO_DIR/actions/
 
-  It requires ice_cube, todotxt, and trollop, although I can't see how you'd be seeing this message if you hadn't figured that out.
+  It requires ice_cube, todotxt, and optimist, although I can't see how you'd be seeing this message if you hadn't figured that out.
 
   You put your entries in $TODO_DIR/ice_recur.txt , and add something like this:
 
