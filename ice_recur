@@ -2,12 +2,13 @@
 
 require 'ice_cube'
 require 'optimist'
+require 'fileutils'
 
-$VERSION='1.3'
+$VERSION='1.5'
 
-opts = Optimist::options do
+$opts = Optimist::options do
   version "ice_recur #{$VERSION} by Robin Lee Powell, MIT license.  Some code taken from https://github.com/chuckbjones/todo.txt-cli-addons/blob/master/recur , license unknown"
-  banner <<-EOS
+  synopsis <<-EOS
 
   ice_recur
 
@@ -71,25 +72,26 @@ opts = Optimist::options do
 
   Some more examples of just the date syntax:
 
-  "weekly ; day 2, 4", aka "Weekly on Tuesdays and Thursdays"
-  "weekly ; day 2, 3", aka "Weekly on Tuesdays and Wednesdays"
-  "weekly ; day Tuesday, Thursday", aka "Weekly on Tuesdays and Thursdays"
-  "weekly ; day Tuesday, Wednesday", aka "Weekly on Tuesdays and Wednesdays"
-  "monthly ; day_of_month 16, 18", aka "Monthly on the 16th and 18th days of the month"
-  "monthly ; day_of_month 1, -3", aka "Monthly on the 1st and -3th to last days of the month"
-  "monthly 2 ; day_of_month 15", aka "Every 2 months on the 15th day of the month"
-  "monthly ; day_of_week Tuesday => 1, -1", aka "Monthly on the 1st Tuesday and last Tuesday"
-  "monthly 2 ; day_of_week :monday => 1 ; day_of_week 3 => -1", aka "Every 2 months on the 1st Monday and last Wednesday"
-  "yearly ; day_of_year 16", aka "Yearly on the 16th day of the year"
-  "yearly 4 ; day_of_year -1", aka "Every 4 years on the last day of the year"
-  "yearly ; month_of_year March, April", aka "Yearly in March and April"
-
-
+  "weekly ; day 2, 4" == "Weekly on Tuesdays and Thursdays"
+  "weekly ; day 2, 3" == "Weekly on Tuesdays and Wednesdays"
+  "weekly ; day Tuesday, Thursday" == "Weekly on Tuesdays and Thursdays"
+  "weekly ; day Tuesday, Wednesday" == "Weekly on Tuesdays and Wednesdays"
+  "monthly ; day_of_month 16, 18" == "Monthly on the 16th and 18th days of the month"
+  "monthly ; day_of_month 1, -3" == "Monthly on the 1st and -3th to last days of the month"
+  "monthly 2 ; day_of_month 15" == "Every 2 months on the 15th day of the month"
+  "monthly ; day_of_week Tuesday => 1, -1" == "Monthly on the 1st Tuesday and last Tuesday"
+  "monthly 2 ; day_of_week :monday => 1 ; day_of_week 3 => -1" == "Every 2 months on the 1st Monday and last Wednesday"
+  "yearly ; day_of_year 16" == "Yearly on the 16th day of the year"
+  "yearly 4 ; day_of_year -1" == "Every 4 years on the last day of the year"
+  "yearly ; month_of_year March, April" == "Yearly in March and April"
 EOS
 
   opt :test, "Run tests on the recurrence code."
   opt :check, "Check the completion file to see if ice_recur has actually run in the last two days.  Takes an email address to complain to if not as argument.", :type => String
   opt :show_next, "Instead of generating entries, show the next date that each entry *would* run."
+  opt :dry_run, "Show the resulting entries but do not add them to the todo file", :short => :n
+  opt :ignore_projects, %Q{By default, projects ("+foo") are counted as part of the text when deciding if ice_recur is about to add a duplicate entry, so "new entry" would be added even if "new entry +foo" already exists.  If you use this flag, those two will be considered the same entry and so it wouldn't be added.}, :short => :p
+  opt :ignore_contexts, %Q{By default, contexts ("@foo") are counted as part of the text when deciding if ice_recur is about to add a duplicate entry, so "new entry" would be added even if "new entry @foo" already exists.  If you use this flag, those two will be considered the same entry and so it wouldn't be added.}, :short => :o
 end
 
 # Probably should have just used a parser library :P
@@ -167,10 +169,15 @@ def task_to_text(task)
     task = task.gsub( %r{^\s*\([A-Z]\)\s*}, '' )
     task = task.gsub( %r{^\s*\d\d\d\d-\d\d-\d\d\s*}, '' )
     task = task.gsub( %r{^\s*\d\d\d\d-\d\d-\d\d\s*}, '' )
-    task = task.gsub( %r{(?:\s|^)\+\S+\s*}, '' )
-    task = task.gsub( %r{(?:\s|^)@\S+\s*}, '' )
+    if $opts[:ignore_contexts]
+      task = task.gsub( %r{(?:\s|^)\+\S+\s*}, '' )
+    end
+    if $opts[:ignore_projects]
+      task = task.gsub( %r{(?:\s|^)@\S+\s*}, '' )
+    end
     task = task.gsub( %r{(?:\s|^)t:[a-zA-Z0-9.-]+}, '' )
     task = task.gsub( %r{(?:\s|^)note:[a-zA-Z0-9.-]+}, '' )
+    task = task.gsub( %r{(?:\s|^)due:[a-zA-Z0-9.-]+}, '' )
     task.chomp!
   end
 
@@ -187,12 +194,12 @@ def tapprint( tstring, schedule, bool, text )
   $tapnum += 1
 end
 
-if ! opts[:test]
+if ! $opts[:test]
   recur_file = File.join(ENV['TODO_DIR'], 'ice_recur.txt')
   completed_file = File.join(ENV['TODO_DIR'], '.ice_recur_completed')
 end
 
-if opts[:test]
+if $opts[:test]
   test_today = Date.parse("16 Jan 2018")
   puts %q{# **NB** All tests use 16 Jan 2018 as "today".}
 
@@ -359,7 +366,7 @@ if opts[:test]
            ! schedule.occurs_on?(test_day_2 - 1) &&
            ! schedule.occurs_on?(test_day_3),
            "includes 16 Mar 2018 and 16 Apr 2018, but not the days before and after, and not 16 Jan 2018" )
-elsif opts[:show_next]
+elsif $opts[:show_next]
   recur_entries = File.read(recur_file).split("\n").reject { |e| e =~ %r{^#} }
 
   recur_entries.each do |recur|
@@ -368,8 +375,8 @@ elsif opts[:show_next]
       puts "Schedule: #{schedstr} -- Next Day: #{make_schedule( schedstr ).next_occurrence.strftime("%Y-%m-%d")} -- Text: #{taskstr}"
     end
   end
-elsif opts[:check]
-  email = opts[:check]
+elsif $opts[:check]
+  email = $opts[:check]
 
   send_mail = false
   e = nil
@@ -408,6 +415,7 @@ else
 
   begin
     todo_list = File.readlines(todo_file)
+    todo_list_new = []
 
     # Get just the non-complete items; strip out tags, projects,
     # dates and key/value tags
@@ -445,7 +453,7 @@ else
             taskstr = taskstr.gsub(%r{^\s*([xX]\s*)?(\([A-Z]\)\s*)?}, '')
             task = "#{$1}#{$2}#{cur_day.to_s} #{taskstr}\n"
 
-            todo_list << task
+            todo_list_new << task
             todo_list_trimmed << [task_to_text(task), task]
           end
         end
@@ -454,7 +462,17 @@ else
       cur_day += 1
     end
 
-    File.write( todo_file, todo_list.join )
+    if $opts[:dry_run]
+      puts "\n\nIn dry run mode; here's the entries we would be adding:\n\n"
+      puts todo_list_new.join
+      puts
+    else
+      puts "\n\nHere's the entries we're adding:\n\n"
+      puts todo_list_new.join
+      puts
+      File.write( todo_file, (todo_list + todo_list_new).join )
+    end
+
   rescue => e
     if File.mtime(todo_file).to_i != orig_todo_time
       puts "FAILURE: Something went wrong; reverting #{todo_file}: #{e}; #{e.backtrace.join("\n")}"
@@ -466,6 +484,7 @@ else
   end
 
   # Mark the "we've actually run" file
-  require 'fileutils'
-  FileUtils.touch completed_file
+  unless $opts[:dry_run]
+    FileUtils.touch completed_file
+  end
 end

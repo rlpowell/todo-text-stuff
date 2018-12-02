@@ -15,3 +15,4 @@ Changelog:
 ice_recur 1.2 29 Nov 2018: Added support for day_of_week, day_of_year and month_of_year
 ice_recur 1.3 29 Nov 2018: Now uses the timestamp on the .ice_recur_completed file, and runs the schedule for each day since then, so you can run it less than once a day and it'll still work properly.
 ice_recur 1.4 30 Nov 2018: No longer uses todotxt-rb; this means better handling of key/value tags, at least potentially
+ice_recur 1.5  2 Dec 2018: Added -n, -p, and -o.  Won't run twice on the same day anymore.  Additional clarity on what's getting added.
