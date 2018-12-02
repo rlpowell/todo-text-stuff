@@ -413,12 +413,17 @@ else
     # dates and key/value tags
     todo_list_trimmed = todo_list.map { |item| [task_to_text(item), item] }
 
+    end_day = Date.today
     if File.exists?(completed_file)
       start_day = File.mtime(completed_file).to_date
+
+      if start_day == end_day
+        puts "ice_recur has already run today; if you think this is in error, delete #{completed_file}.  Exiting."
+        exit 0
+      end
     else
       start_day = Date.today
     end
-    end_day = Date.today
     cur_day = start_day
 
     while cur_day <= end_day
