@@ -4,7 +4,7 @@ require 'ice_cube'
 require 'optimist'
 require 'fileutils'
 
-$VERSION='1.5'
+$VERSION='1.5.1'
 
 $opts = Optimist::options do
   version "ice_recur #{$VERSION} by Robin Lee Powell, MIT license.  Some code taken from https://github.com/chuckbjones/todo.txt-cli-addons/blob/master/recur , license unknown"
