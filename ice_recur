@@ -423,9 +423,9 @@ else
 
     end_day = Date.today
     if File.exists?(completed_file)
-      start_day = File.mtime(completed_file).to_date
+      start_day = File.mtime(completed_file).to_date + 1
 
-      if start_day == end_day
+      if start_day > end_day
         puts "ice_recur has already run today; if you think this is in error, delete #{completed_file}.  Exiting."
         exit 0
       end
