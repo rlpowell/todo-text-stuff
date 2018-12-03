@@ -169,10 +169,10 @@ def task_to_text(task)
     task = task.gsub( %r{^\s*\([A-Z]\)\s*}, '' )
     task = task.gsub( %r{^\s*\d\d\d\d-\d\d-\d\d\s*}, '' )
     task = task.gsub( %r{^\s*\d\d\d\d-\d\d-\d\d\s*}, '' )
-    if $opts[:ignore_contexts]
+    if $opts[:ignore_projects]
       task = task.gsub( %r{(?:\s|^)\+\S+\s*}, '' )
     end
-    if $opts[:ignore_projects]
+    if $opts[:ignore_contexts]
       task = task.gsub( %r{(?:\s|^)@\S+\s*}, '' )
     end
     task = task.gsub( %r{(?:\s|^)t:[a-zA-Z0-9.-]+}, '' )
