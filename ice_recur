@@ -53,7 +53,7 @@ $opts = Optimist::options do
   Checking The Run
   ----------------
 
-  Run "todo ice_recur check" to check if ice_recur has run to completion in the last 2 days.  Pass an email address as an argument; if the check fails, it'll send email to that address.
+  Run "todo ice_recur --check" to check if ice_recur has run to completion in the last 2 days.  Pass an email address as an argument; if the check fails, it'll send email to that address.
 
   Examples
   --------
