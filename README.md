@@ -4,7 +4,7 @@ Stuff I've written for my todo.txt setup.
 #### Currently contains:
 
 `ice_recur`: A recurring item generator for todo.txt.  Yes, there are like 14 of these, but I couldn't find a single one that could do "every 2 weeks" and would run the script for previous days that the script was missed if your computer wasn't turned on, so I wrote my own.
-  - REQUIREMENTS: Ruby and gems: ice_cube, optimist, fileutils
+  - **_Requirements_**: Ruby and gems: ice_cube, optimist, fileutils
   - Run `todo.sh ice_recur --help` for info on how to use this. Also, command line options posted at the bottom of the README.
 
 `templated_checklists`: A file to keep available copies of one-time checklists (i.e. "stuff to take when going swimming")
