@@ -5,7 +5,7 @@ Stuff I've written for my todo.txt setup.
 
 `ice_recur`: A recurring item generator for todo.txt.  Yes, there are like 14 of these, but I couldn't find a single one that could do "every 2 weeks" and would run the script for previous days that the script was missed if your computer wasn't turned on, so I wrote my own.
   - **_Requirements_**: Ruby and gems: ice_cube, optimist, fileutils
-  - Run `todo.sh ice_recur --help` for info on how to use this. Also, command line options posted at the bottom of the README.
+  - Run `todo.sh ice_recur --help` for info on how to use `ice_recur` and all the command line options.
 
 `templated_checklists`: A file to keep available copies of one-time checklists (i.e. "stuff to take when going swimming")
   - Read the comments at the top of the `templated_checklists` file for info on how to use this.
@@ -20,9 +20,9 @@ You put your entries in `$TODO_DIR/ice_recur.txt` , and add something like this:
 
 to your crontab, to run once a day.
 
-Every entry that matches the current day or previous days after `.ice_recur_completed` was last touched will be added, as long as there is no other entry with the same text content.
+Every entry that matches the current day or previous days after `.ice_recur_completed` was last touched (ran) will be added, as long as there is no other entry with the same text content. By default, priority, creation date, completion date, due date, threshold date, and notes are ignored when matching the entry in `ice_recur.txt` to the `todo.txt` file. There are command line options to ignore project and context, as well.
 
-Comments can be added to the file using `#` but `ice_recur.txt` can contain no blank lines between entries or the script won't execute properly.
+Comments can be added to the file using `#`.
 
 #### Recurrence Format (`ice_recur.txt`)
 
@@ -50,25 +50,3 @@ Run `ice_recur` tests like this if you want pretty output and failure if you mis
 4. ice_recur 1.5    2 Dec 2018: Added `-n, -p, and -o`.  Won't run twice on the same day anymore.  Additional clarity on what's getting added.
 5. ice_recur 1.5.1  3 Dec 2018: Bugfix: Start the run the day *after* the last touch to the completed file.
 6. ice_recur 1.5.2  4 Dec 2018: Added `-f`
-
-#### Options:
-```
-  -t, --test               Run tests on the recurrence code.
-  -c, --check=<s>          Check the completion file to see if ice_recur has actually run in the last
-                           two days.  Takes an email address to complain to if not as argument.
-  -s, --show-next          Instead of generating entries, show the next date that each entry *would*
-                           run.
-  -n, --dry-run            Show the resulting entries but do not add them to the todo file
-  -p, --ignore-projects    By default, projects ("+foo") are counted as part of the text when
-                           deciding if ice_recur is about to add a duplicate entry, so "new entry"
-                           would be added even if "new entry +foo" already exists.  If you use this
-                           flag, those two will be considered the same entry and so it wouldn't be
-                           added.
-  -o, --ignore-contexts    By default, contexts ("@foo") are counted as part of the text when
-                           deciding if ice_recur is about to add a duplicate entry, so "new entry"
-                           would be added even if "new entry @foo" already exists.  If you use this
-                           flag, those two will be considered the same entry and so it wouldn't be
-                           added.
-  -v, --version            Print version and exit
-  -h, --help               Show this message
- ```
