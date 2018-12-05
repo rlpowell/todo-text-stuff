@@ -4,7 +4,7 @@ require 'ice_cube'
 require 'optimist'
 require 'fileutils'
 
-$VERSION='1.5.1'
+$VERSION='1.5.2'
 
 $opts = Optimist::options do
   version "ice_recur #{$VERSION} by Robin Lee Powell, MIT license.  Some code taken from https://github.com/chuckbjones/todo.txt-cli-addons/blob/master/recur , license unknown"
@@ -92,6 +92,7 @@ EOS
   opt :dry_run, "Show the resulting entries but do not add them to the todo file", :short => :n
   opt :ignore_projects, %Q{By default, projects ("+foo") are counted as part of the text when deciding if ice_recur is about to add a duplicate entry, so "new entry" would be added even if "new entry +foo" already exists.  If you use this flag, those two will be considered the same entry and so it wouldn't be added.}, :short => :p
   opt :ignore_contexts, %Q{By default, contexts ("@foo") are counted as part of the text when deciding if ice_recur is about to add a duplicate entry, so "new entry" would be added even if "new entry @foo" already exists.  If you use this flag, those two will be considered the same entry and so it wouldn't be added.}, :short => :o
+  opt :force, %Q{Run even if we appear to have already run today.}
 end
 
 # Probably should have just used a parser library :P
@@ -422,11 +423,11 @@ else
     todo_list_trimmed = todo_list.map { |item| [task_to_text(item), item] }
 
     end_day = Date.today
-    if File.exists?(completed_file)
+    if File.exists?(completed_file) && ! $opts[:force]
       start_day = File.mtime(completed_file).to_date + 1
 
       if start_day > end_day
-        puts "ice_recur has already run today; if you think this is in error, delete #{completed_file}.  Exiting."
+        puts "ice_recur has already run today; if you think this is in error, use the -f option.  Exiting."
         exit 0
       end
     else

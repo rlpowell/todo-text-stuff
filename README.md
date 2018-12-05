@@ -19,3 +19,4 @@ ice_recur 1.3   29 Nov 2018: Now uses the timestamp on the .ice_recur_completed 
 ice_recur 1.4   30 Nov 2018: No longer uses todotxt-rb; this means better handling of key/value tags, at least potentially
 ice_recur 1.5    2 Dec 2018: Added -n, -p, and -o.  Won't run twice on the same day anymore.  Additional clarity on what's getting added.
 ice_recur 1.5.1  3 Dec 2018: Bugfix: Start the run the day *after* the last touch to the completed file.
+ice_recur 1.5.2  4 Dec 2018: Added -f
