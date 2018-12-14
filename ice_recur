@@ -154,6 +154,11 @@ def make_schedule( rulestr, startdate = nil )
     method, argstr = rulebit.strip.split(%r{\s+}, 2)
     method.downcase!
 
+    if argstr =~ %r{;}
+      puts "I'm seeing a ; in the arguments for a rule.  This makes me think that you have a ; that you meant to split up rule chunks, but you didn't put spaces on both sides."
+      puts "The full rule is: #{rulestr}"
+    end
+
     args = make_args( argstr )
 
     if args.is_a?(Hash)
@@ -409,7 +414,7 @@ elsif $opts[:show_next]
   recur_entries.each do |recur|
     schedstr, taskstr = recur.strip.split(%r{\s+-\s+}, 2)
     if schedstr && taskstr
-      puts "Schedule: #{schedstr} -- Next Day: #{make_schedule( schedstr ).next_occurrence.strftime("%Y-%m-%d")} -- Text: #{taskstr}"
+      puts "Schedule: #{schedstr} -- Schedule In English: #{make_schedule( schedstr ).to_s} -- Next Day: #{make_schedule( schedstr ).next_occurrence.strftime("%Y-%m-%d")} -- Text: #{taskstr}"
     end
   end
 elsif $opts[:check]
