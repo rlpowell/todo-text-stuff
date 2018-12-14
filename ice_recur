@@ -426,9 +426,11 @@ else
     if File.exists?(completed_file) && ! $opts[:force]
       start_day = File.mtime(completed_file).to_date + 1
 
-      if start_day > end_day
-        puts "ice_recur has already run today; if you think this is in error, use the -f option.  Exiting."
-        exit 0
+      unless $opts[:dry_run]
+        if start_day > end_day
+          puts "ice_recur has already run today; if you think this is in error, use the -f option.  Exiting."
+          exit 0
+        end
       end
     else
       start_day = Date.today
