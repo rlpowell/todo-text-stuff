@@ -4,7 +4,7 @@ require 'ice_cube'
 require 'optimist'
 require 'fileutils'
 
-$VERSION='1.5.2'
+$VERSION='1.6'
 
 $opts = Optimist::options do
   version "ice_recur #{$VERSION} by Robin Lee Powell, MIT license.  Some code taken from https://github.com/chuckbjones/todo.txt-cli-addons/blob/master/recur , license unknown"
@@ -33,11 +33,11 @@ $opts = Optimist::options do
 
   Entries look like:
 
-  @[optional starting date] [timing] - [task]
+  @[optional starting date] @@[optional ending date] [timing] - [task]
 
   like:
 
-  @2016-02-03 Weekly ; day Monday - (B) Mon Recur Test
+  @2016-02-03 @@2018-03-03 Weekly ; day Monday - (B) Mon Recur Test
 
   Where [timing] is a sequence of timing specifiers seperated by " ; ".  Each timing specifier makes the item more specific.
 
@@ -64,6 +64,7 @@ $opts = Optimist::options do
   daily - (A) Runs every day; includes today
   daily 2 - (B) Runs every other day; includes today
   @2016-03-10 daily 2 - Runs every other day, starting on the day specified (which may or may not include today)
+  @2016-03-10 @@2016-03-20 daily 2 - Same as the above, but also stops on the day specified (but may or may not actually occur on that day)
   weekly ; day Friday, Sunday - Runs every Friday and Saturday
   monthly ; day_of_month 11, 13 - Runs on the 11th and 13th of every month
   @2016-03-07 Weekly 2 ; day Thursday - Runs on Thursday every second week starting on the first Thursday after the day specified.
@@ -135,9 +136,15 @@ end
 def make_schedule( rulestr, startdate = nil )
   # Get the start date, if any
   startdate ||= Time.new(2018,01,01).to_date
-  if rulestr =~ %r{^\s*@}
-    startdate = Date.parse(rulestr.sub(%r{^\s*@(\S+)\s.*},'\1'))
-    rulestr = rulestr.dup.sub!(%r{^\s*@\S+},'')
+  if rulestr =~ %r{(^|\s)@[0-9-]+\s}
+    startdate = Date.parse(rulestr.sub(%r{(?:^|\s)@([0-9-]+)\s.*},'\1'))
+    rulestr = rulestr.dup.sub!(%r{(^|\s)@[0-9-]+\s},'\1')
+  end
+
+  enddate = nil
+  if rulestr =~ %r{(^|\s)@@[0-9-]+\s}
+    enddate = Date.parse(rulestr.sub(%r{(?:^|\s)@@([0-9-]+)\s.*},'\1'))
+    rulestr = rulestr.dup.sub!(%r{(^|\s)@@[0-9-]+\s},'\1')
   end
 
   rule=IceCube::Rule
@@ -147,6 +154,11 @@ def make_schedule( rulestr, startdate = nil )
     method, argstr = rulebit.strip.split(%r{\s+}, 2)
     method.downcase!
 
+    if argstr =~ %r{;}
+      puts "I'm seeing a ; in the arguments for a rule.  This makes me think that you have a ; that you meant to split up rule chunks, but you didn't put spaces on both sides."
+      puts "The full rule is: #{rulestr}"
+    end
+
     args = make_args( argstr )
 
     if args.is_a?(Hash)
@@ -154,6 +166,10 @@ def make_schedule( rulestr, startdate = nil )
     else
       rule = rule.send(method, *args)
     end
+  end
+
+  if enddate
+    rule = rule.until(enddate)
   end
 
   schedule.add_recurrence_rule rule
@@ -204,7 +220,7 @@ if $opts[:test]
   test_today = Date.parse("16 Jan 2018")
   puts %q{# **NB** All tests use 16 Jan 2018 as "today".}
 
-  puts "1..15"
+  puts "1..18"
 
   tstring="daily"
   schedule = make_schedule( tstring )
@@ -367,13 +383,38 @@ if $opts[:test]
            ! schedule.occurs_on?(test_day_2 - 1) &&
            ! schedule.occurs_on?(test_day_3),
            "includes 16 Mar 2018 and 16 Apr 2018, but not the days before and after, and not 16 Jan 2018" )
+
+  tstring="@2020-01-01 daily"
+  schedule = make_schedule( tstring )
+  tapprint( tstring, schedule,
+            schedule.occurs_on?(Date.parse("01 Mar 2020")) &&
+            schedule.occurs_on?(Date.parse("01 Mar 2021")) &&
+            ! schedule.occurs_on?(Date.parse("01 Mar 2019")),
+            "includes dates in 2020 and 2021, but not 2019" )
+
+  tstring="@2020-01-01 @@2020-04-01 daily"
+  schedule = make_schedule( tstring )
+  tapprint( tstring, schedule,
+            schedule.occurs_on?(Date.parse("01 Mar 2020")) &&
+            ! schedule.occurs_on?(Date.parse("01 Mar 2021")) &&
+            ! schedule.occurs_on?(Date.parse("01 Mar 2019")),
+            "includes dates in 2020 but not 2021 or 2019" )
+
+  tstring="@@2020-02-01 daily"
+  schedule = make_schedule( tstring )
+  tapprint( tstring, schedule,
+            ! schedule.occurs_on?(Date.parse("01 Mar 2020")) &&
+            ! schedule.occurs_on?(Date.parse("01 Mar 2021")) &&
+            schedule.occurs_on?(Date.parse("01 Mar 2019")),
+            "includes dates in 2019, but not 2020 or 2021" )
+
 elsif $opts[:show_next]
   recur_entries = File.read(recur_file).split("\n").reject { |e| e =~ %r{^#} }
 
   recur_entries.each do |recur|
     schedstr, taskstr = recur.strip.split(%r{\s+-\s+}, 2)
     if schedstr && taskstr
-      puts "Schedule: #{schedstr} -- Next Day: #{make_schedule( schedstr ).next_occurrence.strftime("%Y-%m-%d")} -- Text: #{taskstr}"
+      puts "Schedule: #{schedstr} -- Schedule In English: #{make_schedule( schedstr ).to_s} -- Next Day: #{make_schedule( schedstr ).next_occurrence.strftime("%Y-%m-%d")} -- Text: #{taskstr}"
     end
   end
 elsif $opts[:check]
@@ -426,9 +467,11 @@ else
     if File.exists?(completed_file) && ! $opts[:force]
       start_day = File.mtime(completed_file).to_date + 1
 
-      if start_day > end_day
-        puts "ice_recur has already run today; if you think this is in error, use the -f option.  Exiting."
-        exit 0
+      unless $opts[:dry_run]
+        if start_day > end_day
+          puts "ice_recur has already run today; if you think this is in error, use the -f option.  Exiting."
+          exit 0
+        end
       end
     else
       start_day = Date.today
