@@ -171,14 +171,14 @@ def task_to_text(task)
     task = task.gsub( %r{^\s*\d\d\d\d-\d\d-\d\d\s*}, '' )
     task = task.gsub( %r{^\s*\d\d\d\d-\d\d-\d\d\s*}, '' )
     if $opts[:ignore_projects]
-      task = task.gsub( %r{(?:\s|^)\+\S+\s*}, '' )
+      task = task.gsub( %r{(?:\s|^)\+\S+}, '' )
     end
     if $opts[:ignore_contexts]
-      task = task.gsub( %r{(?:\s|^)@\S+\s*}, '' )
+      task = task.gsub( %r{(?:\s|^)@\S+}, '' )
     end
-    task = task.gsub( %r{(?:\s|^)t:[a-zA-Z0-9.-]+}, '' )
-    task = task.gsub( %r{(?:\s|^)note:[a-zA-Z0-9.-]+}, '' )
-    task = task.gsub( %r{(?:\s|^)due:[a-zA-Z0-9.-]+}, '' )
+    task = task.gsub( %r{(?:\s|^)t:\d\d\d\d-\d\d-\d\d}, '' )
+    task = task.gsub( %r{(?:\s|^)note:\S+}, '' )
+    task = task.gsub( %r{(?:\s|^)due:\d\d\d\d-\d\d-\d\d}, '' )
     task.chomp!
   end
 
