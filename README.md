@@ -19,6 +19,25 @@ turned on, so I wrote my own.
 
 ## Installation:
 
+### Install Dependencies
+
+Install `gem`, the [ruby library manager](https://www.ruby-lang.org/en/libraries/)
+
+Using Pacman:
+ 
+    sudo pacman -S rubygems
+
+Using apt
+
+    sudo apt install rubygems
+
+Afterwards, use gem to install the needed libraries
+
+    gem install optimist
+    gem install ice_cube
+
+### Install `ice_recur`
+
 This script goes in `$TODO_DIR/actions/`
 
 You put your entries in `$TODO_DIR/ice_recur.txt` , and add something like this:
