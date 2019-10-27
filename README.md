@@ -30,6 +30,10 @@ Using Pacman:
 Using apt
 
     sudo apt install rubygems
+    
+Using yum
+
+    sudo yum install rubygems
 
 Afterwards, use gem to install the needed libraries
 
