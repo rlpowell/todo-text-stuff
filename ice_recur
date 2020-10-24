@@ -94,6 +94,7 @@ EOS
   opt :ignore_projects, %Q{By default, projects ("+foo") are counted as part of the text when deciding if ice_recur is about to add a duplicate entry, so "new entry" would be added even if "new entry +foo" already exists.  If you use this flag, those two will be considered the same entry and so it wouldn't be added.}, :short => :p
   opt :ignore_contexts, %Q{By default, contexts ("@foo") are counted as part of the text when deciding if ice_recur is about to add a duplicate entry, so "new entry" would be added even if "new entry @foo" already exists.  If you use this flag, those two will be considered the same entry and so it wouldn't be added.}, :short => :o
   opt :force, %Q{Run even if we appear to have already run today.}
+  opt :no_creation_date, "Remove creation date before adding the task.", :short => :d
 end
 
 # Probably should have just used a parser library :P
@@ -495,8 +496,11 @@ else
 
             # Pull the priority in front of the date
             taskstr = taskstr.gsub(%r{^\s*([xX]\s*)?(\([A-Z]\)\s*)?}, '')
-            task = "#{$1}#{$2}#{cur_day.to_s} #{taskstr}\n"
-
+            if $opts[:no_creation_date]
+              task = "#{$1}#{$2}#{taskstr}\n"
+            else
+              task = "#{$1}#{$2}#{cur_day.to_s} #{taskstr}\n"
+            end
             todo_list_new << task
             todo_list_trimmed << [task_to_text(task), task]
           end
